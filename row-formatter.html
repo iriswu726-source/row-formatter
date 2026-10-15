@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>充/提/轉資訊整理</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#EEF1F4; --panel:#FFFFFF; --ink:#1C2733; --muted:#5C6B7A; --line:#D3DAE2;
+  --accent:#1F5FA8; --accent-soft:#E3ECF7; --ok:#2E7D4F; --warn:#B4541A; --warn-soft:#FBEDE3;
+  --manual:#FFF6D6; --manual-line:#E5C766; --wd:#1F5FA8; --dp:#2E7D4F; --tp:#7A4BB0;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#141A21; --panel:#1D252E; --ink:#E4EAF0; --muted:#98A6B4; --line:#324050;
+    --accent:#6FA6E6; --accent-soft:#223449; --ok:#6CC592; --warn:#F0A06A; --warn-soft:#3A2A1F;
+    --manual:#3A3320; --manual-line:#8A7435; --wd:#6FA6E6; --dp:#6CC592; --tp:#B48FE6;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#141A21; --panel:#1D252E; --ink:#E4EAF0; --muted:#98A6B4; --line:#324050;
+  --accent:#6FA6E6; --accent-soft:#223449; --ok:#6CC592; --warn:#F0A06A; --warn-soft:#3A2A1F;
+  --manual:#3A3320; --manual-line:#8A7435; --wd:#6FA6E6; --dp:#6CC592; --tp:#B48FE6;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
+  font-size:15px;line-height:1.6}
+.wrap{max-width:1100px;margin:0 auto;padding:28px 20px 48px}
+h1{font-size:1.5rem;margin:0 0 4px;font-weight:700}
+.sub{color:var(--muted);margin:0 0 18px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 22px}
+.tab{border-radius:999px;padding:6px 20px}
+.tab[aria-selected="true"]{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:500}
+.switches{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin:0 0 22px}
+.switches .tabs{margin:0}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg[hidden]{display:none}
+.seg button{border:none;border-radius:0;padding:6px 18px}
+.seg button[aria-selected="true"]{background:var(--ink);color:var(--panel);font-weight:500}
+.block{margin:0 0 30px;padding-left:14px;border-left:4px solid var(--wd)}
+.block.dp{border-left-color:var(--dp)}
+.block.tp{border-left-color:var(--tp)}
+.block.tp > h2{color:var(--tp)}
+.block > h2{font-size:1.2rem;margin:0 0 12px;color:var(--wd)}
+.block.dp > h2{color:var(--dp)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media (max-width:820px){.grid{grid-template-columns:1fr}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px 18px}
+.panel.full{grid-column:1/-1}
+h3{font-size:1rem;margin:0 0 4px;font-weight:700}
+.desc{color:var(--muted);font-size:.85rem;margin:0 0 10px}
+textarea,input[type=text]{width:100%;border:1px solid var(--line);border-radius:8px;
+  background:var(--bg);color:var(--ink);padding:9px 11px;font:inherit;font-size:14px}
+textarea{min-height:100px;resize:vertical;line-height:1.5}
+textarea:focus,input:focus,button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.fields{display:grid;grid-template-columns:auto 1fr;gap:8px 12px;align-items:center}
+.fields label{color:var(--muted);font-size:.9rem;white-space:nowrap}
+.fields input{padding:6px 10px;background:var(--panel)}
+.fields input.filled{background:var(--accent-soft);border-color:transparent}
+.fields input.manual{background:var(--manual);border-color:var(--manual-line)}
+textarea.out{min-height:210px;background:var(--panel);font-size:15px;line-height:1.7}
+.bar{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.btns{display:flex;gap:8px;align-items:center}
+button{font:inherit;font-size:.9rem;border:1px solid var(--line);background:var(--panel);color:var(--ink);
+  padding:7px 14px;border-radius:6px;cursor:pointer}
+button:hover{border-color:var(--accent)}
+button.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:500}
+.status{color:var(--ok);font-size:.85rem}
+.clear-btn{background:#C8453A;border-color:#C8453A;color:#fff;font-weight:500;padding:6px 18px}
+.clear-btn:hover{background:#A9362D;border-color:#A9362D}
+.btns.foot{justify-content:flex-end;flex-wrap:wrap;margin-top:10px}
+.fields label.check-row{display:inline-flex;gap:8px;align-items:center;color:var(--ink);cursor:pointer;font-size:.9rem}
+.check-row input{width:16px;height:16px;accent-color:var(--accent)}
+.quick-cols{display:grid;grid-template-columns:1fr 1fr;gap:0 16px}
+@media (max-width:520px){.fields label.check-row{display:inline-flex;gap:8px;align-items:center;color:var(--ink);cursor:pointer;font-size:.9rem}
+.check-row input{width:16px;height:16px;accent-color:var(--accent)}
+.quick-cols{grid-template-columns:1fr}}
+.notes.inline{grid-column:1/-1;margin:0 0 4px;padding:6px 10px 8px;border:1px dashed var(--line);border-radius:8px}
+.notes{margin-top:14px;padding-top:12px;border-top:1px dashed var(--line)}
+.notes-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.notes-head span{color:var(--muted);font-size:.85rem}
+.notes-head button{padding:3px 10px;font-size:.8rem}
+.note-chips{display:flex;flex-wrap:wrap;gap:6px}
+.note-chip{background:var(--accent-soft);border:none;color:var(--accent);padding:4px 12px;border-radius:999px;font-size:.85rem}
+.note-empty{color:var(--muted);font-size:.85rem}
+.note-row{display:flex;gap:6px;margin-bottom:6px}
+.note-row input{flex:1;padding:5px 9px;background:var(--panel)}
+.note-row button{padding:4px 10px;font-size:.8rem;white-space:nowrap}
+.note-row button.del{color:var(--warn)}
+.dispatch{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:-8px 0 22px;
+  padding:10px 14px;background:var(--panel);border:1px solid var(--line);border-radius:10px}
+.dispatch label{color:var(--muted);font-size:.9rem;white-space:nowrap}
+.dispatch select{font:inherit;font-size:14px;border:1px solid var(--line);border-radius:6px;
+  background:var(--bg);color:var(--ink);padding:5px 8px;margin-left:6px}
+.dispatch input[type=text]{flex:1;min-width:200px;padding:6px 10px}
+.warn{display:none;margin-top:10px;background:var(--warn-soft);color:var(--warn);
+  padding:8px 12px;border-radius:6px;font-size:.88rem}
+.warn.show{display:block;white-space:pre-line}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>充/提/轉資訊整理</h1>
+  <p class="sub">選系統後，把表格那一列複製貼上，會自動整理成固定格式；按「貼上」類按鈕會直接填到派單頁。</p>
+  <div class="switches">
+    <div class="tabs" role="tablist">
+      <button class="tab" data-p="dd" role="tab">DD系統</button>
+      <button class="tab" data-p="kr" role="tab">KR系統</button>
+      <button class="tab" data-p="xo" role="tab">XO系統</button>
+    </div>
+    <div class="seg" id="seg" role="tablist" aria-label="類型"></div>
+    <button class="clear-btn" id="clearBtn">清空</button>
+  </div>
+  <div class="dispatch">
+    <label>派單平台<select id="platSel"></select></label>
+    <input type="text" id="targetUrl" placeholder="派單頁網址（第一次使用請填，會記住）">
+    <button id="openTarget">開啟派單頁</button>
+    <span class="status" id="linkStatus"></span>
+  </div>
+  <div id="blocks"></div>
+</div>
+
+<script>
+const store = {get(k){try{return localStorage.getItem(k)}catch(e){return null}},
+               set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
+
+const FIELD_DEFS = {
+  reason:  {ui:'操作原因',   out:'操作原因'},
+  platform:{ui:'平台',       out:'平台'},
+  tamount: {ui:'金额',       out:'金额'},
+  item:    {ui:'项目',       out:'项目'},
+  target:  {ui:'账变对象',   out:'帐号'},
+  merchant:{ui:'商户号',     out:'商户号'},
+  order:   {ui:'订单号',     out:'订单号'},
+  account: {ui:'帐号',       out:'帐号'},
+  amount:  {ui:'出货金额',   out:'出货金额'},
+  apply:   {ui:'申请单金额', out:'申请单金额'},
+  actual:  {ui:'实际金额',   out:'进货金额',   manual:true},
+  fee:     {ui:'手续费',     out:'手续费'},
+  third:   {ui:'第三方',     out:'第三方'},
+  payer:   {ui:'付款姓名',   out:'付款人姓名', manual:true},
+  note:    {ui:'备注',       out:'备注'}
+};
+const EXTRA_COPY = [{k:'order',label:'貼上訂單號'},{k:'account',label:'貼上帳號'}];
+const LAYOUT_W = ['merchant','order','account','amount','fee','third','note'];
+const LAYOUT_D = ['merchant','order','account','apply','actual','third','payer','note'];
+const LAYOUT_T = ['reason','platform','account','tamount','item','note'];
+
+const HEADER_WORDS = new Set(['商户','会员','出款类型','银行卡号','取款金额','手续费','银行手续费',
+  '状态','状 态','操作者','申请日期','确认日期','推播通知','商家名','订单号','金额','推播',
+  '订单编号','订单金额','商家名称','同步状态','序号','备注']);
+const tokens = text => text.replace(/\r/g,'').split(/[\t\n]+/).map(s=>s.trim())
+  .filter(s=>s && !HEADER_WORDS.has(s) && !HEADER_WORDS.has(s.replace(/\s+/g,'')));
+const isNum = s => /^-?[\d,]+(\.\d+)?$/.test(s);
+const num = s => parseFloat(String(s??'').replace(/,/g,''));
+
+/* ---------- 當日款項檢查（03:00 ～ 隔日 03:00 為同一天） ---------- */
+function bizDay(dt){ const x = new Date(dt.getTime() - 3*3600*1000); return new Date(x.getFullYear(), x.getMonth(), x.getDate()); }
+function dayWarning(text){
+  const m = text.match(/(\d{4})[\/-](\d{1,2})[\/-](\d{1,2})\s+(\d{1,2}):(\d{2})(?::(\d{2}))?/);
+  if(!m) return '';
+  const rec = new Date(+m[1], +m[2]-1, +m[3], +m[4], +m[5], +(m[6]||0));
+  const today = bizDay(new Date());
+  if(bizDay(rec).getTime() === today.getTime()) return '';
+  const p2 = n => String(n).padStart(2,'0');
+  const md = d => `${p2(d.getMonth()+1)}/${p2(d.getDate())}`;
+  const next = new Date(today.getTime() + 24*3600*1000);
+  return `⚠ 此筆非當日款項（${p2(m[2])}/${p2(m[3])} ${p2(m[4])}:${m[5]}），今日區間為 ${md(today)} 03:00 ～ ${md(next)} 03:00，請再確認。`;
+}
+
+/* ---------- 各系統解析 ---------- */
+function parseDDWithdraw([t1,t2]){
+  const r = {}; let warn = '', a1='', a2='';
+  const tk = tokens(t1);
+  if(tk.length){
+    let c = tk.findIndex(s=>/^\d{10,}$/.test(s.replace(/\s/g,''))); if(c<0) c=3;
+    const nums=[]; for(let i=c+1;i<tk.length&&nums.length<2;i++) if(isNum(tk[i])) nums.push(tk[i]);
+    r.account = tk[c-2] ?? ''; r.amount = nums[0] ?? ''; r.fee = nums[1] ?? ''; a1 = r.amount;
+  }
+  const tk2 = tokens(t2);
+  if(tk2.length){
+    let o = tk2.findIndex(s=>/^\d{5,}$/.test(s)); if(o<0) o=2;
+    r.order = tk2[o] ?? ''; r.third = tk2[o-1] ?? ''; a2 = tk2[o+1] ?? '';
+    if(!tk.length) r.amount = a2;
+  }
+  if(a1 && a2 && num(a1)!==num(a2))
+    warn = `注意：兩張表的金額不一致（提款列表 ${a1}，出款紀錄 ${a2}），請確認是不是同一筆。`;
+  return {r, warn};
+}
+function parseDDDeposit([t]){
+  const tk = tokens(t); if(!tk.length) return {r:{}};
+  let o = tk.findIndex(s=>/^[A-Za-z]{1,4}\d{10,}$/.test(s)); if(o<0) o=1;
+  return {r:{order:tk[o]??'', account:tk[o+1]??'', apply:tk[o+2]??'', third:tk[o+4]??''}};
+}
+function parseKR([t]){
+  const text = t.replace(/\r/g,''); if(!text.trim()) return {r:{}};
+  const dateRe = /^\d{4}-\d{2}-\d{2}/;
+  const lines = text.split('\n').filter(l=>l.trim());
+  const line = lines.find(l=>l.split('\t').some(c=>dateRe.test(c.trim()))) || lines[lines.length-1];
+  const c = line.split('\t').map(x=>x.trim());
+  let d = c.findIndex(x=>dateRe.test(x)); if(d<0) d=5;
+  const m = c.findIndex(x=>/^[0-9A-Z]{20,}$/.test(x));
+  return {r:{order:c[d-3]??'', account:c[d-2]??'', amount:c[d+3]??'', fee:c[d+6]??'',
+             third:(m>0?c[m-1]:c[d+20])??''}};
+}
+function parseKRDeposit([t]){
+  const text = t.replace(/\r/g,''); if(!text.trim()) return {r:{}};
+  const dateRe = /^\d{4}-\d{2}-\d{2}/;
+  const lines = text.split('\n').filter(l=>l.trim());
+  const line = lines.find(l=>l.split('\t').some(c=>dateRe.test(c.trim()))) || lines[lines.length-1];
+  const c = line.split('\t').map(x=>x.trim());
+  let d = c.findIndex(x=>dateRe.test(x)); if(d<0) d=5;           // 充值时间
+  const m = c.findIndex(x=>/^[0-9A-Z]{20,}$/.test(x));            // 商户号
+  const r = {order:c[d-3]??'', account:c[d-2]??'', apply:c[d+2]??''};
+  if(m>0){ r.merchant = c[m]; r.third = c[m-1]??''; }
+  else r.third = c[d+10]??'';
+  return {r};
+}
+function parseXODeposit([t]){
+  const text = t.replace(/\r/g,''); if(!text.trim()) return {r:{}};
+  const dateRe = /^\d{4}[\/-]\d{2}[\/-]\d{2}/;
+  const lines = text.split('\n').filter(l=>l.trim());
+  const line = lines.find(l=>l.split('\t').some(c=>dateRe.test(c.trim()))) || text;
+  const c = text.split(/[\t\n]+/).map(x=>x.trim()).filter(Boolean);
+  const d = c.findIndex(x=>dateRe.test(x));                      // 充值日期
+  if(d<0) return {r:{}};
+  const m = c.findIndex(x=>/^[0-9A-Z]{20,}$/.test(x));            // 商户号
+  const r = {account:c[d-4]??'', apply:c[d-3]??''};
+  if(m>0){ r.merchant = c[m]; r.third = c[m-1]??''; }
+  else r.third = c[d+2]??'';
+  return {r};
+}
+// KR 轉點
+function parseKRPoint([t]){
+  const text = t.replace(/\r/g,''); if(!text.trim()) return {r:{}};
+  const dateRe = /^\d{4}-\d{2}-\d{2}/;
+  const lines = text.split('\n').filter(l=>l.trim());
+  const line = lines.find(l=>l.split('\t').some(c=>dateRe.test(c.trim()))) || text;
+  const c = text.split(/[\t\n]+/).map(x=>x.trim()).filter(Boolean);
+  const d = c.findIndex(x=>dateRe.test(x));                      // 账变时间
+  if(d<0) return {r:{}};
+  const user = c[d-1] ?? '';                                      // 用户名
+  let other = '';
+  let ti = c.findIndex(x=>/用户\s*[:：]/.test(x));                // 账变对象
+  if(ti>=0){
+    other = c[ti].replace(/^.*用户\s*[:：]\s*/,'');
+    if(!other && c[ti+1]){ other = c[ti+1]; ti++; }
+  } else ti = d+3;
+  const n = c.slice(ti+1).find(x=>/^[-+]?[\d,]+(\.\d+)?$/.test(x));  // 收入或支出
+  const type = c[d+2] ?? '';                                      // 账变类型
+  // 判斷貼的是哪一方：收入（正數／上级给款）= 收到錢的人，要扣回；支出（負數／加款下级）= 給錢的人，要補回
+  let received;
+  if(n) received = !/^-/.test(n);
+  else received = /给款|收款/.test(type) && !/加款下级/.test(type);
+  const r = received ? {target:user, account:other} : {target:other, account:user};
+  if(n) r.tamount = n.replace(/[-+,]/g,'');
+  // 项目：取账变类型括號內的字；充值 → 红利並勾選補入碼量
+  const tm = type.match(/[(（]([^)）]+)[)）]/);
+  if(tm){
+    const kind = tm[1].trim();
+    if(kind==='充值'){ r.item = '红利'; r.volume = true; }
+    else { r.item = kind; r.volume = false; }
+  }
+  return {r};
+}
+
+// DD 轉點
+function parseDDPoint([t]){
+  const text = t.replace(/\r/g,''); if(!text.trim()) return {r:{}};
+  const dateRe = /^\d{4}[\/-]\d{2}[\/-]\d{2}/;
+  const lines = text.split('\n').filter(l=>l.trim());
+  const line = lines.find(l=>l.split('\t').some(c=>dateRe.test(c.trim()))) || text;
+  const c = text.split(/[\t\n]+/).map(x=>x.trim()).filter(Boolean);
+  const d = c.findIndex(x=>dateRe.test(x));                      // 时间
+  if(d<0) return {r:{}};
+  const user = c[d-2] ?? '';                                      // 用户名
+  const n = c[d+1] ?? '';                                         // 变动金额
+  const noteTxt = c.slice(d+1).join(' ');                         // 备注
+  let other = '';
+  const g = noteTxt.match(/[給给]\s*[:：]?\s*([A-Za-z0-9_]+)/);   // 红利转点 給：xxx（給出方）
+  const f = noteTxt.match(/从\s*([A-Za-z0-9_]+)/);                // 从xxx 红利转点（收到方）
+  if(g) other = g[1]; else if(f) other = f[1];
+  let received;
+  if(/^[-+]?[\d,]+(\.\d+)?$/.test(n)) received = !/^-/.test(n);
+  else received = !!f && !g;
+  const r = received ? {target:user, account:other} : {target:other, account:user};
+  if(/[\d]/.test(n)) r.tamount = n.replace(/[-+,]/g,'');
+  // 项目：取类别（或备注裡的「xx转点」）；充值 → 红利並勾選補入碼量
+  let kind = (c[d-1] ?? '').trim();
+  if(!/^(红利|活动|娱乐|充值)$/.test(kind)){ const km = noteTxt.match(/(红利|活动|娱乐|充值)转点/); kind = km ? km[1] : kind; }
+  if(kind){
+    if(kind==='充值'){ r.item = '红利'; r.volume = true; }
+    else { r.item = kind; r.volume = false; }
+  }
+  return {r};
+}
+
+// XO 轉點：转点用户＝給出方（補回 +），接收用户＝收到方（扣回 −），兩列都一樣
+function parseXOPoint([t]){
+  const text = t.replace(/\r/g,''); if(!text.trim()) return {r:{}};
+  const dateRe = /^\d{4}[\/-]\d{2}[\/-]\d{2}/;
+  const c = text.split(/[\t\n]+/).map(x=>x.trim()).filter(Boolean);
+  const d = c.findIndex(x=>dateRe.test(x));                      // 时间
+  if(d<0) return {r:{}};
+  const r = {account:c[d-2]??'', target:c[d+3]??''};
+  const n = c[d+1] ?? '';                                         // 变动金额
+  if(/\d/.test(n)) r.tamount = n.replace(/[-+,]/g,'');
+  const kind = (c[d-1] ?? '').replace(/^转/,'').trim();          // 转点类型
+  if(kind){
+    if(kind==='充值'){ r.item = '红利'; r.volume = true; }
+    else { r.item = kind; r.volume = false; }
+  }
+  return {r};
+}
+
+// XO 外接
+function parseXOTransfer([t]){
+  const text = t.replace(/\r/g,''); if(!text.trim()) return {r:{}};
+  const dateRe = /^\d{4}[\/-](\d{2})[\/-](\d{2})/;
+  const c = text.split(/[\t\n]+/).map(x=>x.trim()).filter(Boolean);
+  const d = c.findIndex(x=>dateRe.test(x));                      // 时间
+  if(d<0) return {r:{}};
+  const [, mm, dd] = c[d].match(dateRe);
+  const product = c[d-2] ?? '', type = c[d-1] ?? '';             // 产品、转帐类型
+  const dir = /转入/.test(type) ? '汇入' : /转出/.test(type) ? '汇出' : type;
+  const amt = c.slice(d+1).find(x=>/^[-+]?[\d,]+(\.\d+)?$/.test(x)) || '';
+  const st = (c.find(x=>/失败|成功|处理中/.test(x)) || '失败').replace(/^[•●·\s]+/,'');
+  return {r:{account:c[d-3]??'', tamount:amt.replace(/[-+,]/g,''),
+             note:`${mm}/${dd} ${product}${dir}${st}金额补回`}};
+}
+
+// KR 外接
+function parseKRTransfer([t]){
+  const text = t.replace(/\r/g,''); if(!text.trim()) return {r:{}};
+  const dateRe = /^\d{4}-(\d{2})-(\d{2})/;
+  const lines = text.split('\n').filter(l=>l.trim());
+  const line = lines.find(l=>l.split('\t').some(c=>dateRe.test(c.trim()))) || text;
+  const c = text.split(/[\t\n]+/).map(x=>x.trim()).filter(Boolean);
+  const d = c.findIndex(x=>dateRe.test(x));                      // 转账时间
+  if(d<0) return {r:{}};
+  const [, mm, dd] = c[d].match(dateRe);
+  const product = c[d+2] ?? '', status = c[d+4] ?? '';
+  return {r:{account:c[d-1]??'', tamount:c[d+1]??'',
+             note:`${mm}/${dd}   ${product}  ${status}补回`}};
+}
+function parseXO([t4]){
+  const r = {};
+  if(t4.trim()){
+    const c = t4.split(/[\t\n]+/).map(x=>x.trim()).filter(Boolean);
+    const d = c.findIndex(x=>/^\d{4}[\/-]\d{2}[\/-]\d{2}/.test(x));
+    if(d>=0){
+      const m = c.findIndex(x=>/^[0-9A-Z]{20,}$/.test(x));
+      r.account = c[d-6]??''; r.amount = c[d-5]??'';
+      const a=num(r.amount), b=num(c[d-4]);
+      r.fee = (!isNaN(a)&&!isNaN(b)) ? String(+(a-b).toFixed(2)) : '0';
+      r.third = (m>0?c[m-1]:c[d+2])??'';
+    }
+  }
+  return {r};
+}
+
+/* ---------- 區塊設定 ---------- */
+const BLOCKS = {
+  dd_w:{title:'提款', kind:'wd', layout:LAYOUT_W, parse:parseDDWithdraw, inputs:[
+    {title:'提款列表', desc:'商户、会员、出款类型、银行卡号、取款金额、手续费…那一列', ph:'在這裡貼上提款列表的那一列'},
+    {title:'出款紀錄', desc:'操作者、商家名、订单号、金额、状态那一列', ph:'在這裡貼上出款紀錄的那一列'}]},
+  dd_d:{title:'充值', kind:'dp', layout:LAYOUT_D, parse:parseDDDeposit, inputs:[
+    {title:'充值列表', desc:'商户、订单编号、会员、订单金额、手续费、商家名称…那一列', ph:'在這裡貼上充值列表的那一列', full:true}]},
+  kr_d:{title:'充值', kind:'dp', layout:LAYOUT_D, parse:parseKRDeposit, inputs:[
+    {title:'充值列表', desc:'充值单号、前台显示充值单号、三方单号、用户名…那一整列', ph:'在這裡貼上充值列表的那一列', full:true}]},
+  kr_p:{title:'轉點', kind:'tp', dayCheck:true, layout:['platform','target','account','item','tamount'],
+    labels:{target:'扣回帐号 (−)', account:'补回帐号 (+)'},
+    remember:['platform'], manual:['platform'], quickTargets:['platform'],
+    extraCopy:[{k:'target',label:'貼上扣回帳號'},{k:'account',label:'貼上補回帳號'}],
+    format:v=>['【转点操作错误需扣回】', `平台：${v('platform')}`,
+      `帐号：${v('target')}`, `项目：${v('item')}`, `金额：${v('tamount')}`, '备注：-', '',
+      `帐号：${v('account')}`, `项目：${v('item')}`, `金额：${v('tamount')}`, '备注：+',
+      ...(v('volume') ? ['项目为充值转点，码量需一并扣回'] : [])].join('\n'),
+    checks:[{k:'volume', label:'是否需補入碼量'}],
+    parse:parseKRPoint, inputs:[
+    {title:'账变列表', desc:'账变编号、用户名、账变时间、账变产品、账变类型、账变对象、收入、支出…那一列', ph:'在這裡貼上账变列表的那一列', full:true}]},
+  kr_t:{title:'外接', kind:'tp', layout:LAYOUT_T, sep:'：', remember:['platform'], manual:['platform'], quickTarget:'platform',
+    defaults:{reason:'资金转换失败金额补回', item:'系统加款'},
+    extraCopy:[{k:'account',label:'貼上帳號'}], parse:parseKRTransfer, inputs:[
+    {title:'转账列表', desc:'转账单号、用户名、转账时间、充值金额、转出产品、转入产品、状态那一列', ph:'在這裡貼上转账列表的那一列', full:true}]},
+  kr_w:{title:'提款', kind:'wd', layout:LAYOUT_W, parse:parseKR, inputs:[
+    {title:'提现列表', desc:'提现单号、前台显示提现单号、三方单号、用户名…那一整列', ph:'在這裡貼上提现列表的那一列', full:true}]},
+  xo_d:{title:'充值', kind:'dp', layout:LAYOUT_D, manual:['order'], parse:parseXODeposit, inputs:[
+    {title:'充值列表', desc:'层级、方案号、会员帐号、订单金额、手续费、支付平台…那一列', ph:'在這裡貼上充值列表的那一列', full:true}]},
+  xo_w:{title:'提款', kind:'wd', layout:LAYOUT_W, manual:['order'], parse:parseXO, inputs:[
+    {title:'提现列表', desc:'方案号、层级、用户名、提现金额、实际出款金额…那一列', ph:'在這裡貼上列表的那一列', full:true}]}
+};
+BLOCKS.dd_p = {...BLOCKS.kr_p, parse:parseDDPoint, inputs:[
+  {title:'账变列表', desc:'交易号、用户名、类别、时间、变动金额、变动后金额、备注那一列', ph:'在這裡貼上那一列', full:true}]};
+BLOCKS.xo_p = {...BLOCKS.kr_p, remember:[], manual:[], quickTargets:[], defaults:{platform:'XO'},
+  parse:parseXOPoint, inputs:[
+  {title:'转点列表', desc:'帐变编号、转点用户、转点类型、时间、变动金额、变动后金额、接收用户那一列', ph:'在這裡貼上那一列', full:true}]};
+BLOCKS.xo_t = {title:'外接', kind:'tp', layout:['platform','account','tamount','item','note'],
+  defaults:{platform:'XO', item:'红利'}, remember:[], quickTargets:[],
+  extraCopy:[{k:'account',label:'貼上帳號'}],
+  format:v=>['【外接游戏资金转换失败金额补回】', `平台：${v('platform')}`, `帐号：${v('account')}`,
+    `金额：${v('tamount')}`, `项目：${v('item')}`, `备注：${v('note')}`].join('\n'),
+  parse:parseXOTransfer, inputs:[
+  {title:'转帐列表', desc:'方案号、用户名、产品、转帐类型、时间、转入/转出平台金额…那一列', ph:'在這裡貼上那一列', full:true}]};
+const SYSTEMS = {dd:['dd_d','dd_w','dd_p'], kr:['kr_d','kr_w','kr_p','kr_t'], xo:['xo_d','xo_w','xo_p','xo_t']};
+
+const el = (tag, cls, txt) => { const e=document.createElement(tag); if(cls) e.className=cls; if(txt!=null) e.textContent=txt; return e; };
+
+function renderBlock(id){
+  const cfg = BLOCKS[id];
+  const wrap = el('section','block '+cfg.kind);
+  wrap.append(el('h2',null,cfg.title));
+  const grid = el('div','grid'); wrap.append(grid);
+
+  const tas = cfg.inputs.map(inp=>{
+    const p = el('div','panel'+(inp.full?' full':''));
+    const ta = el('textarea'); ta.placeholder = inp.ph;
+    p.append(el('h3',null,inp.title), el('p','desc',inp.desc), ta);
+    grid.append(p); return ta;
+  });
+
+  const fp = el('div','panel');
+  const isManual = k => FIELD_DEFS[k].manual || (cfg.manual||[]).includes(k);
+  const hasManual = cfg.layout.some(isManual);
+  fp.append(el('h3',null,'欄位確認'),
+    el('p','desc', hasManual ? '自動帶入後可直接修改；黃色欄位請自行填寫。商户号會記住。'
+                             : '自動帶入後可直接修改；商户号會記住，下次不用重打。'));
+  const fields = el('div','fields'); fp.append(fields);
+  const warn = el('div','warn'); fp.append(warn);
+  const F = {};
+  const labelOf = k => (cfg.labels||{})[k] || FIELD_DEFS[k].ui;
+  cfg.layout.forEach(k=>{
+    const d = FIELD_DEFS[k], fid = id+'_'+k;
+    const lab = el('label',null,labelOf(k)); lab.htmlFor = fid;
+    const inp = el('input'); inp.type='text'; inp.id=fid;
+    if(isManual(k)){ inp.classList.add('manual'); inp.placeholder='請自行填寫'; }
+    fields.append(lab, inp); F[k]=inp;
+  });
+  const C = {};
+  (cfg.checks||[]).forEach(ch=>{
+    const lab = el('label','check-row');
+    const cb = el('input'); cb.type='checkbox'; cb.id = id+'_'+ch.k;
+    lab.append(cb, el('span',null,ch.label)); fields.append(el('span'), lab);
+    C[ch.k] = cb;
+  });
+  grid.append(fp);
+
+  // 快捷按鈕（每個區塊各自保存；可設定多欄）
+  const qTargets = cfg.quickTargets || [cfg.quickTarget || 'note'];
+  const quickWrap = el('div', qTargets.length>1 ? 'quick-cols' : '');
+  fp.insertBefore(quickWrap, warn);
+  const quickRenders = qTargets.map(qTarget=>{
+    const qName = labelOf(qTarget);
+    const nKey = (qTarget==='note' ? 'mg_notes_' : 'mg_quick_'+qTarget+'_') + id;
+    let notes = []; try{ notes = JSON.parse(store.get(nKey)||'[]'); }catch(e){ notes = []; }
+    let editing = false;
+    const saveNotes = () => store.set(nKey, JSON.stringify(notes));
+    const notesBox = el('div','notes');
+    const nHead = el('div','notes-head');
+    const nToggle = el('button',null,'編輯');
+    nHead.append(el('span',null,(qTarget==='note'?'備註':qName)+'快捷按鈕'), nToggle);
+    const nBody = el('div');
+    notesBox.append(nHead, nBody);
+    if(qTarget!=='note' && F[qTarget]){ notesBox.classList.add('inline'); F[qTarget].after(notesBox); }
+    else quickWrap.append(notesBox);
+    function renderNotes(){
+      nBody.innerHTML = '';
+      nToggle.textContent = editing ? '完成' : '編輯';
+      if(!editing){
+        if(!notes.length){ nBody.append(el('div','note-empty',`按「編輯」新增常用${qTarget==='note'?'備註':qName}，之後點一下就能帶入${qName}欄。`)); return; }
+        const chips = el('div','note-chips');
+        notes.forEach(t=>{
+          const b = el('button','note-chip',t);
+          b.onclick = ()=>{ fill(F[qTarget], t); if(remember.includes(qTarget)) store.set(rKey(qTarget), t); build(); };
+          chips.append(b);
+        });
+        nBody.append(chips); return;
+      }
+      notes.forEach((t,i)=>{
+        const row = el('div','note-row');
+        const inp = el('input'); inp.type='text'; inp.value=t;
+        inp.oninput = ()=>{ notes[i] = inp.value; saveNotes(); };
+        const up = el('button',null,'上移'); up.disabled = i===0;
+        up.onclick = ()=>{ [notes[i-1],notes[i]]=[notes[i],notes[i-1]]; saveNotes(); renderNotes(); };
+        const del = el('button','del','刪除');
+        del.onclick = ()=>{ notes.splice(i,1); saveNotes(); renderNotes(); };
+        row.append(inp, up, del); nBody.append(row);
+      });
+      const addRow = el('div','note-row');
+      const addInp = el('input'); addInp.type='text'; addInp.placeholder='輸入新的按鈕內容';
+      const addBtn = el('button','primary','新增');
+      const add = ()=>{ const v = addInp.value.trim(); if(!v) return; notes.push(v); saveNotes(); renderNotes();
+        nBody.querySelector('.note-row:last-child input').focus(); };
+      addBtn.onclick = add;
+      addInp.onkeydown = e=>{ if(e.key==='Enter') add(); };
+      addRow.append(addInp, addBtn); nBody.append(addRow);
+    }
+    nToggle.onclick = ()=>{ editing = !editing; if(!editing){ notes = notes.map(t=>t.trim()).filter(Boolean); saveNotes(); } renderNotes(); };
+    return renderNotes;
+  });
+
+  const op = el('div','panel');
+  const bar = el('div','bar'); const btns = el('div','btns');
+  const status = el('span','status');
+  const copy = el('button','primary','貼上');
+  const extras = (cfg.extraCopy||EXTRA_COPY).map(x=>{ const b = el('button',null,x.label); b.dataset.k = x.k; return b; });
+  btns.append(status, ...extras, copy); bar.append(el('h3',null,'整理結果'), btns);
+  const out = el('textarea','out'); out.readOnly = true;
+  op.append(bar, out); grid.append(op);
+
+  const remember = cfg.remember || ['merchant'];
+  const rKey = k => (k==='merchant' ? 'mg_merchant_' : 'mg_'+k+'_') + id;
+  const sep = cfg.sep ?? '： ';
+  const fill = (inp,v) => { inp.value = v ?? ''; if(!inp.classList.contains('manual')) inp.classList.toggle('filled', !!inp.value); };
+  const build = () => {
+    if(cfg.format){ out.value = cfg.format(k=> C[k] ? C[k].checked : F[k].value.trim()); return; }
+    out.value = cfg.layout.map(k=>{ const v=F[k].value.trim(), l=FIELD_DEFS[k].out; return v?`${l}${sep}${v}`:`${l}：`; }).join('\n');
+  };
+  const autoFill = () => {
+    const vals = tas.map(t=>t.value);
+    let {r, warn:w} = cfg.parse(vals);
+    Object.entries(r).forEach(([k,v])=>{ if(F[k]) fill(F[k],v); else if(C[k]) C[k].checked = !!v; });
+    if(cfg.dayCheck){ const dw = dayWarning(vals.join('\n')); if(dw) w = w ? w+'\n'+dw : dw; }
+    warn.textContent = w||''; warn.classList.toggle('show', !!w);
+    build();
+  };
+  const reset = () => {
+    tas.forEach(t=>t.value='');
+    cfg.layout.forEach(k=>{
+      if(remember.includes(k)) fill(F[k], store.get(rKey(k)) || '');
+      else fill(F[k], (cfg.defaults||{})[k] || '');
+    });
+    Object.values(C).forEach(cb=>cb.checked=false);
+    warn.classList.remove('show'); build();
+  };
+  tas.forEach(t=>t.addEventListener('input',autoFill));
+  Object.values(C).forEach(cb=>cb.addEventListener('change',build));
+  Object.values(F).forEach(inp=>inp.addEventListener('input',()=>{
+    if(!inp.classList.contains('manual')) inp.classList.toggle('filled', !!inp.value);
+    const k = inp.id.slice(id.length+1); if(remember.includes(k)) store.set(rKey(k), inp.value);
+    build();
+  }));
+  const copyText = async (text, msg) => {
+    try{ await navigator.clipboard.writeText(text); }
+    catch(e){
+      const tmp = el('textarea'); tmp.value = text; document.body.append(tmp);
+      tmp.select(); document.execCommand('copy'); tmp.remove();
+    }
+    if(msg){ status.textContent = msg; setTimeout(()=>status.textContent='',1500); }
+  };
+  let stTimer;
+  const showStatus = (msg, ms=2500) => { clearTimeout(stTimer); status.textContent = msg; stTimer = setTimeout(()=>status.textContent='', ms); };
+  // 貼上：送到派單頁對應欄位，同時複製到剪貼簿（派單頁沒反應時可手動貼）
+  const paste = (field, text, name) => {
+    const p = sendToTarget(field, text);        // 須在點擊當下同步呼叫，才不會被擋彈出視窗
+    copyText(text, '');
+    showStatus('貼上'+name+'中…', 20000);
+    p.then(res => showStatus(res.ok ? '已貼上'+name : res.msg, res.ok ? 1500 : 5000));
+  };
+  copy.onclick = () => { if(!out.value.trim()) return showStatus('內容是空的'); paste('message', out.value, '訊息'); };
+  extras.forEach(b=>b.onclick = ()=>{
+    const k = b.dataset.k, v = F[k].value.trim();
+    const name = labelOf(k);
+    if(!v) return showStatus(name+'是空的');
+    paste(k==='order' ? 'order' : 'member', v, name);
+  });
+  wrap._clear = ()=>{ reset(); tas[0].focus(); };
+  reset();
+  quickRenders.forEach(f=>f());
+  return wrap;
+}
+
+/* ---------- 派單頁連線（需在派單頁安裝 dispatch-paste.user.js） ---------- */
+const PLATFORMS = ['YS','XH','Dwin','DDF','SH','LS','OL','JY','XO','HS','XY','RF'];
+const TARGET_NAME = 'arrange_dispatch';
+const platSel = document.getElementById('platSel');
+const urlInp = document.getElementById('targetUrl');
+const linkStatus = document.getElementById('linkStatus');
+PLATFORMS.forEach(p=>platSel.append(new Option(p,p)));
+urlInp.value = store.get('mg_target_url') || '';
+urlInp.addEventListener('input',()=>store.set('mg_target_url', urlInp.value.trim()));
+platSel.addEventListener('change',()=>store.set('mg_plat_'+curSys, platSel.value));
+let targetWin = null, loading = false, queue = [];
+const pending = new Map();
+const tOrigin = () => { try{ return new URL(urlInp.value.trim()).origin; }catch(e){ return '*'; } };
+const flashLink = msg => { linkStatus.textContent = msg; setTimeout(()=>linkStatus.textContent='',3000); };
+function openTarget(){
+  const url = urlInp.value.trim();
+  if(!url){ urlInp.focus(); flashLink('請先填派單頁網址'); return null; }
+  const w = window.open(url, TARGET_NAME);
+  if(!w){ flashLink('彈出視窗被擋，請允許本頁開新視窗'); return null; }
+  targetWin = w; loading = true; return w;
+}
+function getTarget(){
+  if(targetWin && !targetWin.closed) return targetWin;
+  let w = null;
+  try{ w = window.open('', TARGET_NAME); }catch(e){}
+  if(!w) return null;
+  let blank = false;
+  try{ blank = w.location.href === 'about:blank'; }catch(e){}   // 跨網域讀不到 = 派單頁已開著
+  if(!blank){ targetWin = w; return w; }
+  const url = urlInp.value.trim();
+  if(!url){ w.close(); return null; }
+  w.location.href = url;                                         // 新開的空白視窗直接導到派單頁
+  targetWin = w; loading = true; return w;
+}
+function sendToTarget(field, value){
+  return new Promise(resolve=>{
+    const w = getTarget();
+    if(!w) return resolve({ok:false, msg: urlInp.value.trim() ? '開不了派單頁（已複製，可手動貼上）' : '請先填派單頁網址（已複製）'});
+    const id = Date.now().toString(36) + Math.random().toString(36).slice(2);
+    const msg = {type:'arrange-fill', id, platform:platSel.value, field, value};
+    const timer = setTimeout(()=>{
+      pending.delete(id); queue = queue.filter(m=>m!==msg);
+      resolve({ok:false, msg:'派單頁沒回應：請確認已安裝腳本，或按「開啟派單頁」（已複製）'});
+    }, loading ? 20000 : 8000);
+    pending.set(id, res=>{ clearTimeout(timer); resolve(res); });
+    if(loading) queue.push(msg); else w.postMessage(msg, tOrigin());
+  });
+}
+window.addEventListener('message', e=>{
+  if(!targetWin || e.source !== targetWin) return;
+  const d = e.data || {};
+  if(d.type === 'arrange-ready'){
+    loading = false; flashLink('派單頁已連線');
+    const q = queue; queue = []; q.forEach(m=>targetWin.postMessage(m, tOrigin()));
+  } else if(d.type === 'arrange-done' && pending.has(d.id)){
+    pending.get(d.id)(d); pending.delete(d.id);
+  }
+});
+document.getElementById('openTarget').onclick = openTarget;
+
+let curSys = store.get('mg_system') || 'dd';
+function setSystem(p, blockId){
+  if(!SYSTEMS[p]) p='dd';
+  curSys = p;
+  const ids = SYSTEMS[p];
+  if(!ids.includes(blockId)) blockId = store.get('mg_block_'+p);
+  if(!ids.includes(blockId)) blockId = ids[0];
+  document.querySelectorAll('.tab').forEach(t=>t.setAttribute('aria-selected', t.dataset.p===p));
+  const seg = document.getElementById('seg'); seg.innerHTML='';
+  seg.hidden = ids.length < 2;
+  ids.forEach(id=>{
+    const b = el('button',null,BLOCKS[id].title); b.setAttribute('role','tab');
+    b.setAttribute('aria-selected', id===blockId);
+    b.onclick = ()=>setSystem(p,id);
+    seg.append(b);
+  });
+  const box = document.getElementById('blocks'); box.innerHTML='';
+  box.append(renderBlock(blockId));
+  store.set('mg_system',p); store.set('mg_block_'+p, blockId);
+  const plat = store.get('mg_plat_'+p); if(PLATFORMS.includes(plat)) platSel.value = plat;
+}
+document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>setSystem(t.dataset.p));
+document.getElementById('clearBtn').onclick = ()=>{
+  const b = document.querySelector('#blocks .block'); if(b && b._clear) b._clear();
+};
+setSystem(curSys);
+</script>
+</body>
+</html>
