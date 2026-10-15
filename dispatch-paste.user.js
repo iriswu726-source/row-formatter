@@ -8,6 +8,7 @@
 // @grant        none
 // @run-at       document-idle
 // ==/UserScript==
+// 可選：不想用書籤「連線派單」時，改裝這個腳本就會自動連線。
 // ↑ 建議把 @match 改成派單頁的網域，例如：// @match https://xxx.example.com/*
 
 (function(){

@@ -98,6 +98,9 @@ button.primary{background:var(--accent);border-color:var(--accent);color:#fff;fo
 .dispatch select{font:inherit;font-size:14px;border:1px solid var(--line);border-radius:6px;
   background:var(--bg);color:var(--ink);padding:5px 8px;margin-left:6px}
 .dispatch input[type=text]{flex:1;min-width:200px;padding:6px 10px}
+.bm{display:inline-block;padding:6px 14px;border-radius:6px;background:var(--accent-soft);color:var(--accent);
+  font-size:.9rem;font-weight:500;text-decoration:none;border:1px dashed var(--accent);cursor:grab}
+.dispatch .hint{flex-basis:100%;color:var(--muted);font-size:.82rem}
 .warn{display:none;margin-top:10px;background:var(--warn-soft);color:var(--warn);
   padding:8px 12px;border-radius:6px;font-size:.88rem}
 .warn.show{display:block;white-space:pre-line}
@@ -120,7 +123,9 @@ button.primary{background:var(--accent);border-color:var(--accent);color:#fff;fo
     <label>派單平台<select id="platSel"></select></label>
     <input type="text" id="targetUrl" placeholder="派單頁網址（第一次使用請填，會記住）">
     <button id="openTarget">開啟派單頁</button>
+    <a class="bm" id="bookmarklet" href="#" title="拖到書籤列">連線派單</a>
     <span class="status" id="linkStatus"></span>
+    <div class="hint">第一次：把「連線派單」拖到瀏覽器書籤列。之後按「開啟派單頁」→ 在派單頁點書籤「連線派單」，就能用貼上按鈕。派單頁重新整理後要再點一次書籤。</div>
   </div>
   <div id="blocks"></div>
 </div>
@@ -575,7 +580,67 @@ function renderBlock(id){
   return wrap;
 }
 
-/* ---------- 派單頁連線（需在派單頁安裝 dispatch-paste.user.js） ---------- */
+/* ---------- 派單頁端程式：做成書籤「連線派單」在派單頁執行（也可用 dispatch-paste.user.js） ---------- */
+function dispatchAgent(){
+  const toast = (t, bad) => {
+    const d = document.createElement('div'); d.textContent = t;
+    d.style.cssText = 'position:fixed;top:16px;left:50%;transform:translateX(-50%);z-index:2147483647;padding:10px 18px;'
+      + 'border-radius:8px;font:14px sans-serif;color:#fff;box-shadow:0 4px 14px rgba(0,0,0,.25);background:' + (bad ? '#C8453A' : '#2E7D4F');
+    document.body.append(d); setTimeout(()=>d.remove(), 2500);
+  };
+  const opener = window.opener;
+  if(!opener){ toast('沒有連到整理頁：請從整理頁按「開啟派單頁」打開這一頁，再點書籤', true); return; }
+  if(window.__arrangeAgent){ opener.postMessage({type:'arrange-ready'}, '*'); toast('已連線整理頁'); return; }
+  window.__arrangeAgent = true;
+  const FIELDS = {
+    member:  {name:'成员',     ph:['输入成员','輸入成員'],           switchPlat:true},
+    order:   {name:'订单号',   ph:['输入订单号','輸入訂單號'],       switchPlat:true},
+    message: {name:'文字讯息', ph:['文字讯息','文字訊息','文字信息'], switchPlat:false}
+  };
+  const sleep = ms => new Promise(r=>setTimeout(r, ms));
+  const visible = e => !!(e.offsetParent || e.getClientRects().length);
+  const waitFor = async (fn, ms=3000) => { const end = Date.now()+ms; for(;;){ const v = fn(); if(v || Date.now() > end) return v; await sleep(100); } };
+  const platformEls = code => [...document.querySelectorAll('body *')].filter(e=>
+      visible(e) && e.textContent.trim() === code && ![...e.children].some(c=>c.textContent.trim() === code))
+    .sort((a,b)=>a.getBoundingClientRect().left - b.getBoundingClientRect().left);
+  const onPlatform = code => { const els = platformEls(code);
+    return els.length > 1 && els[els.length-1].getBoundingClientRect().left - els[0].getBoundingClientRect().left > 60; };
+  const switchPlatform = async code => {
+    if(!code || onPlatform(code)) return true;
+    const nav = platformEls(code)[0]; if(!nav) return false;
+    (nav.closest('li,a,[role=menuitem]') || nav).click();
+    await waitFor(()=>onPlatform(code)); await sleep(300); return true;
+  };
+  const findField = phs => [...document.querySelectorAll('input,textarea')]
+    .find(e=>visible(e) && !e.disabled && !e.readOnly && phs.some(p=>(e.placeholder||'').includes(p)));
+  const setValue = (el, v) => {
+    const proto = el.tagName === 'TEXTAREA' ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype;
+    Object.getOwnPropertyDescriptor(proto, 'value').set.call(el, v);
+    el.dispatchEvent(new Event('input', {bubbles:true})); el.dispatchEvent(new Event('change', {bubbles:true})); el.focus();
+  };
+  const handle = async d => {
+    const f = FIELDS[d.field]; if(!f) return {ok:false, msg:'不認得的欄位'};
+    if(f.switchPlat && !(await switchPlatform(d.platform))) return {ok:false, msg:'派單頁找不到平台 '+d.platform+'（已複製）'};
+    const el = await waitFor(()=>findField(f.ph));
+    if(!el) return {ok:false, msg: d.field==='message' ? '請先在派單頁點開一張派單（已複製）' : '派單頁找不到「'+f.name+'」欄位（已複製）'};
+    setValue(el, d.value); return {ok:true};
+  };
+  let chain = Promise.resolve();
+  window.addEventListener('message', e=>{
+    if(e.source !== opener) return;
+    const d = e.data || {}; if(d.type !== 'arrange-fill') return;
+    chain = chain.then(()=>handle(d)).catch(err=>({ok:false, msg:'貼上失敗：'+err.message}))
+      .then(res=>opener.postMessage({type:'arrange-done', id:d.id, ...res}, '*'));
+  });
+  opener.postMessage({type:'arrange-ready'}, '*');
+  toast('已連線整理頁');
+}
+const bmLink = document.getElementById('bookmarklet');
+bmLink.href = 'javascript:(' + encodeURIComponent(dispatchAgent.toString()) + ')()';
+bmLink.onclick = e => { e.preventDefault(); bmLink.nextElementSibling.textContent = '請把它「拖」到書籤列，不是點它';
+  setTimeout(()=>bmLink.nextElementSibling.textContent='', 3000); };
+
+/* ---------- 派單頁連線 ---------- */
 const PLATFORMS = ['YS','XH','Dwin','DDF','SH','LS','OL','JY','XO','HS','XY','RF'];
 const TARGET_NAME = 'arrange_dispatch';
 const platSel = document.getElementById('platSel');
@@ -617,7 +682,7 @@ function sendToTarget(field, value){
     const msg = {type:'arrange-fill', id, platform:platSel.value, field, value};
     const timer = setTimeout(()=>{
       pending.delete(id); queue = queue.filter(m=>m!==msg);
-      resolve({ok:false, msg:'派單頁沒回應：請確認已安裝腳本，或按「開啟派單頁」（已複製）'});
+      resolve({ok:false, msg:'派單頁未連線：請在派單頁點書籤「連線派單」（已複製）'});
     }, loading ? 20000 : 8000);
     pending.set(id, res=>{ clearTimeout(timer); resolve(res); });
     if(loading) queue.push(msg); else w.postMessage(msg, tOrigin());
